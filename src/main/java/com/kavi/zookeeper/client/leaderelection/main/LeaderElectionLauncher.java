@@ -1,0 +1,42 @@
+/**
+ * 
+ */
+package com.kavi.zookeeper.client.leaderelection.main;
+
+import com.kavi.zookeeper.client.leaderelection.nodes.ProcessNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+public class LeaderElectionLauncher {
+
+
+	private static final Logger LOG = LoggerFactory.getLogger(LeaderElectionLauncher.class);
+	
+	public static void main(String[] args) throws IOException {
+		
+		if(args.length < 2) {
+			System.err.println("Usage: java -jar <jar_file_name> <process id integer> <zkhost:port pairs>");
+			System.exit(2);
+		}
+		
+		final int id = Integer.valueOf(args[0]);
+		final String zkURL = args[1];
+		
+		final ExecutorService service = Executors.newSingleThreadExecutor();
+		
+		final Future<?> status = service.submit(new ProcessNode(id, zkURL));
+		
+		try {
+			status.get();
+		} catch (InterruptedException | ExecutionException e) {
+			LOG.error(e.getMessage(), e);
+			service.shutdown();
+		}
+	}
+}
